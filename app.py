@@ -92,12 +92,7 @@ def check():
                 #   yaha hm apna result check krain gay
                 if result[0] == True:
                     name = getName(image)
-                    if not isMatched:
-                        file_ = request.files['file']
-                        un_id = generateUnqiueId(name)
-                        filename = secure_filename(file_.filename)
-                        path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
-                        file_.save(path_file)
+                    
 
                     matched_img_url.append({
                         "name":name,
@@ -110,6 +105,13 @@ def check():
             except Exception as e:
                 print("error is comming========>",e)
                 pass
+        if isMatched:
+            name = getName(matched_img_url[0]["url"])
+            file_ = request.files['file']
+            un_id = generateUnqiueId(name)
+            filename = secure_filename(file_.filename)
+            path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
+            file_.save(path_file)
         return jsonify({
             "success":True,
             "isMatched":isMatched,
