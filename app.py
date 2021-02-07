@@ -91,10 +91,11 @@ def check():
             if result[0] == True:
                 name = getName(image)
                 if not isMatched:
+                    file_ = request.files['file']
                     un_id = generateUnqiueId(name)
-                    filename = secure_filename(file.filename)
+                    filename = secure_filename(file_.filename)
                     path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
-                    file.save(path_file)
+                    file_.save(path_file)
 
                 matched_img_url.append({
                     "name":name,
