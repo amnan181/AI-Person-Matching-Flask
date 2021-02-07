@@ -108,6 +108,7 @@ def check():
                 else:
                     print("Not matched: " + image)
             except Exception as e:
+                print("error is comming========>",e)
                 pass
         return jsonify({
             "success":True,
