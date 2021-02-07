@@ -3,7 +3,7 @@ from flask import Flask,jsonify,request
 import face_recognition
 import uuid
 from werkzeug.utils import secure_filename
-
+import shutil
 app = Flask(__name__)
 
 def generateUnqiueId(name):
@@ -19,6 +19,76 @@ def saveUserPhoto(name,file):
     filename = secure_filename(file.filename)
     path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
     file.save(path_file)
+
+def applyAI(path_file):
+
+    images_ = os.listdir('images')
+    images = []
+    for i in images_:
+        if not i == '.DS_Store':
+            images.append(i)
+        
+        # English:
+        #   load your image which you are recognition
+        # Urdu:
+        #   es line mn wo image dyn jis ko ap recognize kerna chahty hn
+    image_to_be_matched = face_recognition.load_image_file(path_file)
+        
+        
+
+        # English:
+        #   encoded the loaded image into a feature vector
+        # Urdu:
+        #   jo image ap ny recognition ky liy li h y line us ko encode krti h taky usy baad mn compare kia jay dosri images ky sath
+    image_to_be_matched_encoded = face_recognition.face_encodings(
+            image_to_be_matched)[0]
+
+
+        # English:
+        #   iterate over each image
+        # Urdu:
+        #   Es process mn hm folder mn tamam picure ky sath apni makhsoos krda picture ko recognize krain gay
+    isMatched = False
+    matched_img_url = []
+    for image in images:
+        try:
+                
+                # English:
+                #   load the image
+                # Urdu:
+                #   y hamary folder sy tamam image bari bari load kry ga
+            current_image = face_recognition.load_image_file("images/" + image)
+                # |----------------SAME----------------|
+                # encode the loaded image into a feature vector
+            current_image_encoded = face_recognition.face_encodings(current_image)[0]
+                # English:
+                #   match your image with the image and check if it matches
+                # Urdu:
+                #   Y hamari makhsoos image ko hamry folder ki tamam image ky sath bari bari compare kry ga
+            result = face_recognition.compare_faces(
+                    [image_to_be_matched_encoded], current_image_encoded)
+                # English:
+                #   check if it was a match
+                # Urdu:
+                #   yaha hm apna result check krain gay
+            if result[0] == True:
+                name = getName(image)
+                    
+
+                matched_img_url.append({
+                        "name":name,
+                        "url":image
+                    })
+                isMatched = True
+                print("Matched: " + image)
+            else:
+                print("Not matched: " + image)
+        except Exception as e:
+            print("error is comming========>",e)
+            pass
+            
+    return isMatched,matched_img_url
+    
 
 @app.route('/upload',methods=['POST'])
 def upload():
@@ -42,76 +112,20 @@ def upload():
 @app.route('/check',methods=['POST'])
 def check():
     try:
-        images_ = os.listdir('images')
-        images = []
-        for i in images_:
-            if not i == '.DS_Store':
-                images.append(i)
         file = request.files['file']
-        # English:
-        #   load your image which you are recognition
-        # Urdu:
-        #   es line mn wo image dyn jis ko ap recognize kerna chahty hn
-        image_to_be_matched = face_recognition.load_image_file(file)
-        
+        un_id = generateUnqiueId("unknown")
+        ext = secure_filename(file.filename).split('.')[-1]
+        path_file =  un_id+ "." +ext
+        file.save(path_file)
 
-        # English:
-        #   encoded the loaded image into a feature vector
-        # Urdu:
-        #   jo image ap ny recognition ky liy li h y line us ko encode krti h taky usy baad mn compare kia jay dosri images ky sath
-        image_to_be_matched_encoded = face_recognition.face_encodings(
-            image_to_be_matched)[0]
+        isMatched,matched_img_url = applyAI(path_file)
 
-
-        # English:
-        #   iterate over each image
-        # Urdu:
-        #   Es process mn hm folder mn tamam picure ky sath apni makhsoos krda picture ko recognize krain gay
-        isMatched = False
-        matched_img_url = []
-        for image in images:
-            try:
-                
-                # English:
-                #   load the image
-                # Urdu:
-                #   y hamary folder sy tamam image bari bari load kry ga
-                current_image = face_recognition.load_image_file("images/" + image)
-                # |----------------SAME----------------|
-                # encode the loaded image into a feature vector
-                current_image_encoded = face_recognition.face_encodings(current_image)[0]
-                # English:
-                #   match your image with the image and check if it matches
-                # Urdu:
-                #   Y hamari makhsoos image ko hamry folder ki tamam image ky sath bari bari compare kry ga
-                result = face_recognition.compare_faces(
-                    [image_to_be_matched_encoded], current_image_encoded)
-                # English:
-                #   check if it was a match
-                # Urdu:
-                #   yaha hm apna result check krain gay
-                if result[0] == True:
-                    name = getName(image)
-                    
-
-                    matched_img_url.append({
-                        "name":name,
-                        "url":image
-                    })
-                    isMatched = True
-                    print("Matched: " + image)
-                else:
-                    print("Not matched: " + image)
-            except Exception as e:
-                print("error is comming========>",e)
-                pass
         if isMatched:
             name = getName(matched_img_url[0]["url"])
-            file_ = request.files['file']
             un_id = generateUnqiueId(name)
-            filename = secure_filename(file_.filename)
-            path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
-            file_.save(path_file)
+            destination = "images/" + un_id+ "." +ext
+            shutil.move(path_file, destination)
+
         return jsonify({
             "success":True,
             "isMatched":isMatched,
