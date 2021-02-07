@@ -70,41 +70,45 @@ def check():
         isMatched = False
         matched_img_url = []
         for image in images:
-            # English:
-            #   load the image
-            # Urdu:
-            #   y hamary folder sy tamam image bari bari load kry ga
-            current_image = face_recognition.load_image_file("images/" + image)
-            # |----------------SAME----------------|
-            # encode the loaded image into a feature vector
-            current_image_encoded = face_recognition.face_encodings(current_image)[0]
-            # English:
-            #   match your image with the image and check if it matches
-            # Urdu:
-            #   Y hamari makhsoos image ko hamry folder ki tamam image ky sath bari bari compare kry ga
-            result = face_recognition.compare_faces(
-                [image_to_be_matched_encoded], current_image_encoded)
-            # English:
-            #   check if it was a match
-            # Urdu:
-            #   yaha hm apna result check krain gay
-            if result[0] == True:
-                name = getName(image)
-                if not isMatched:
-                    file_ = request.files['file']
-                    un_id = generateUnqiueId(name)
-                    filename = secure_filename(file_.filename)
-                    path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
-                    file_.save(path_file)
+            try:
+                
+                # English:
+                #   load the image
+                # Urdu:
+                #   y hamary folder sy tamam image bari bari load kry ga
+                current_image = face_recognition.load_image_file("images/" + image)
+                # |----------------SAME----------------|
+                # encode the loaded image into a feature vector
+                current_image_encoded = face_recognition.face_encodings(current_image)[0]
+                # English:
+                #   match your image with the image and check if it matches
+                # Urdu:
+                #   Y hamari makhsoos image ko hamry folder ki tamam image ky sath bari bari compare kry ga
+                result = face_recognition.compare_faces(
+                    [image_to_be_matched_encoded], current_image_encoded)
+                # English:
+                #   check if it was a match
+                # Urdu:
+                #   yaha hm apna result check krain gay
+                if result[0] == True:
+                    name = getName(image)
+                    if not isMatched:
+                        file_ = request.files['file']
+                        un_id = generateUnqiueId(name)
+                        filename = secure_filename(file_.filename)
+                        path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
+                        file_.save(path_file)
 
-                matched_img_url.append({
-                    "name":name,
-                    "url":image
-                })
-                isMatched = True
-                print("Matched: " + image)
-            else:
-                print("Not matched: " + image)
+                    matched_img_url.append({
+                        "name":name,
+                        "url":image
+                    })
+                    isMatched = True
+                    print("Matched: " + image)
+                else:
+                    print("Not matched: " + image)
+            except Exception as e:
+                pass
         return jsonify({
             "success":True,
             "isMatched":isMatched,
