@@ -5,6 +5,11 @@ import uuid
 from werkzeug.utils import secure_filename
 import shutil
 app = Flask(__name__)
+class TestFailed(Exception):
+    def __init__(self, m):
+        self.message = m
+    def __str__(self):
+        return self.message
 
 def generateUnqiueId(name):
     return "{}_{}".format(name,uuid.uuid4().hex)
@@ -27,7 +32,7 @@ def applyAI(path_file):
     for i in images_:
         if not i == '.DS_Store':
             images.append(i)
-        
+     
         # English:
         #   load your image which you are recognition
         # Urdu:
@@ -41,9 +46,11 @@ def applyAI(path_file):
         # Urdu:
         #   jo image ap ny recognition ky liy li h y line us ko encode krti h taky usy baad mn compare kia jay dosri images ky sath
     image_to_be_matched_encoded = face_recognition.face_encodings(
-            image_to_be_matched)[0]
-
-
+            image_to_be_matched)
+    if not len(image_to_be_matched_encoded):
+        raise TestFailed("We cann't found face in this picture please check your image and make sure image is not rotated!")
+    
+    image_to_be_matched_encoded = image_to_be_matched_encoded[0]
         # English:
         #   iterate over each image
         # Urdu:
@@ -71,6 +78,7 @@ def applyAI(path_file):
                 #   check if it was a match
                 # Urdu:
                 #   yaha hm apna result check krain gay
+            
             if result[0] == True:
                 name = getName(image)
                     
