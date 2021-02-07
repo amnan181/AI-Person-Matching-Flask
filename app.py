@@ -4,7 +4,16 @@ import face_recognition
 import uuid
 from werkzeug.utils import secure_filename
 import shutil
+from db import db
 app = Flask(__name__)
+
+
+Imagegallary = db["Imagegallary"]
+
+def saveImageGalleryToDB(data):
+    Imagegallary.insert_one(data)
+
+
 class TestFailed(Exception):
     def __init__(self, m):
         self.message = m
@@ -19,10 +28,15 @@ def getName(name):
     exact_name = "".join(name)
     return exact_name
 
-def saveUserPhoto(name,file):
+def saveUserPhoto(name,file,location):
     un_id = generateUnqiueId(name)
     filename = secure_filename(file.filename)
     path_file = 'images/' +  un_id+ "." +filename.split('.')[-1]
+    saveImageGalleryToDB({
+                "file":path_file,
+                "name":name,
+                "location":location
+            })
     file.save(path_file)
 
 def applyAI(path_file):
@@ -103,7 +117,8 @@ def upload():
     try:
         file = request.files['file']
         name = request.form.get('name')
-        saveUserPhoto(name,file)
+        location = request.form.get('location',"")
+        saveUserPhoto(name,file,location)
         # un_id = generateUnqiueId(name)
         # path_file = 'images/' + un_id
         # file.save(path_file)
@@ -117,11 +132,26 @@ def upload():
             "success":False,
         })
 
+@app.route('/gallery')
+def getImagegallary():
+    cursor = Imagegallary.find({})
+    data = []
+    for user in cursor:
+        user['_id'] = str(user['_id'])
+        data.append(user)
+    
+    return jsonify({
+        "data":data
+    })
+
+
 @app.route('/check',methods=['POST'])
 def check():
     try:
         file = request.files['file']
         un_id = generateUnqiueId("unknown")
+        location = request.form.get('location',"")
+
         ext = secure_filename(file.filename).split('.')[-1]
         path_file =  un_id+ "." +ext
         file.save(path_file)
@@ -132,6 +162,11 @@ def check():
             name = getName(matched_img_url[0]["url"])
             un_id = generateUnqiueId(name)
             destination = "images/" + un_id+ "." +ext
+            saveImageGalleryToDB({
+                "file":destination,
+                "name":name,
+                "location":location
+            })
             shutil.move(path_file, destination)
 
         return jsonify({
