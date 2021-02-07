@@ -42,10 +42,11 @@ def upload():
 @app.route('/check',methods=['POST'])
 def check():
     try:
-        images = os.listdir('images')
-        if images[0] == '.DS_Store':
-            del images[0]
-        print(images)
+        images_ = os.listdir('images')
+        images = []
+        for i in images_:
+            if not i == '.DS_Store':
+                images.append(i)
         file = request.files['file']
         # English:
         #   load your image which you are recognition
