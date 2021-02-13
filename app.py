@@ -65,11 +65,13 @@ def applyAI(path_file):
     images_ = os.listdir('images')
     for image in images_:
         if not image == '.DS_Store':
-            models = ['VGG-Face', 'Facenet', 'OpenFace', 'DeepFace', 'DeepID', 'Dlib']
+            # models = ['Facenet', 'OpenFace', 'DeepFace']
+            models = ['Facenet']
             for model_name in models:
                 model = DeepFace.build_model(model_name)
                 try:
                     result = DeepFace.verify(path_file, "images/{}".format(image), model_name = model_name, model = model)
+                    print("result=>",result)
                     if result["verified"]:
                         name = getName(image)
                         matched_img_url.append({
@@ -80,6 +82,8 @@ def applyAI(path_file):
                         break
                 except Exception as e:
                     print("error comming",e)
+        if isMatched:
+            break
     return isMatched,matched_img_url
      
         # English:
