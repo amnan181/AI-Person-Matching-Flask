@@ -5,6 +5,7 @@ import uuid
 from werkzeug.utils import secure_filename
 import shutil
 from db import db
+from bson.objectid import ObjectId
 from deepface import DeepFace
 app = Flask(__name__)
 
@@ -41,36 +42,50 @@ def saveUserPhoto(name,file,location):
     file.save(path_file)
 
 def applyAI(path_file):
-    df = DeepFace.find(img_path = path_file, db_path = "images")
-    images= df['identity'].values.tolist()
+    # df = DeepFace.verify(img_path = path_file, db_path = "images")
+    # images= df['identity'].values.tolist()
     isMatched = False
     matched_img_url = []
-    if len(images):
-        isMatched = True
-        for image in images:
-            image = image.split('/')[-1]
-            name = getName(image)
-            matched_img_url.append({
-                        "name":name,
-                        "url":image
-                    })
+    # if len(images):
+    #     isMatched = True
+    #     for image in images:
+            # image = image.split('/')[-1]
+            # name = getName(image)
+            # matched_img_url.append({
+            #             "name":name,
+            #             "url":image
+            #         })
 
-        return isMatched,matched_img_url
+    #     return isMatched,matched_img_url
 
-    else:
-        return isMatched,matched_img_url
+    # else:
+    #     return isMatched,matched_img_url
 
         # raise TestFailed("We cann't found face in this picture please check your image and make sure image is not rotated!")
-    # images_ = os.listdir('images')
-    # images = []
-    # for i in images_:
-    #     if not i == '.DS_Store':
-    #         images.append(i)
+    images_ = os.listdir('images')
+    for image in images_:
+        if not image == '.DS_Store':
+            models = ['VGG-Face', 'Facenet', 'OpenFace', 'DeepFace', 'DeepID', 'Dlib']
+            for model_name in models:
+                model = DeepFace.build_model(model_name)
+                try:
+                    result = DeepFace.verify(path_file, "images/{}".format(image), model_name = model_name, model = model)
+                    if result["verified"]:
+                        name = getName(image)
+                        matched_img_url.append({
+                                    "name":name,
+                                    "url":image
+                                })
+                        isMatched = True
+                        break
+                except Exception as e:
+                    print("error comming",e)
+    return isMatched,matched_img_url
      
-    #     # English:
-    #     #   load your image which you are recognition
-    #     # Urdu:
-    #     #   es line mn wo image dyn jis ko ap recognize kerna chahty hn
+        # English:
+        #   load your image which you are recognition
+        # Urdu:
+        #   es line mn wo image dyn jis ko ap recognize kerna chahty hn
     # image_to_be_matched = face_recognition.load_image_file(path_file)
         
         
@@ -171,6 +186,30 @@ def getImagegallary():
 def send_file(filename):
     print(filename)
     return send_from_directory("images",filename)
+
+@app.route('/delete',methods=['POST'])
+def delete():
+    try:
+        oid = request.form.get('oid')
+        resp = Imagegallary.delete_one(
+                        { "_id": oid }
+                    )
+        print(resp)
+        if resp.acknowledged:
+            return jsonify({
+                "message":"Successfully deleted",
+                "success":True
+            })
+        return jsonify({
+                "message":"Looks like already deleted",
+                "success":True
+            })
+    except Exception as e:
+        return jsonify({
+            "message":str(e),
+            
+        }),500
+
 
 @app.route('/check',methods=['POST'])
 def check():
