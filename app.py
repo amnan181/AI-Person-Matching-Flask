@@ -1,5 +1,5 @@
 import os
-from flask import Flask,jsonify,request
+from flask import Flask,jsonify,request,send_from_directory
 # import face_recognition
 import uuid
 from werkzeug.utils import secure_filename
@@ -167,6 +167,10 @@ def getImagegallary():
         "data":data
     })
 
+@app.route('/images/<filename>')
+def send_file(filename):
+    print(filename)
+    return send_from_directory("images",filename)
 
 @app.route('/check',methods=['POST'])
 def check():
@@ -178,7 +182,10 @@ def check():
         ext = secure_filename(file.filename).split('.')[-1]
         path_file =  un_id+ "." +ext
         file.save(path_file)
-
+        try:
+            os.remove("images/representations_vgg_face.pkl")
+        except OSError:
+            pass
         isMatched,matched_img_url = applyAI(path_file)
 
         if isMatched:
@@ -192,18 +199,26 @@ def check():
             })
             shutil.move(path_file, destination)
 
+        try:
+            os.remove(path_file)
+        except OSError:
+            pass
         return jsonify({
             "success":True,
             "isMatched":isMatched,
             "matchedUrl":matched_img_url
         })
     except Exception as e:
+        try:
+            os.remove(path_file)
+        except OSError:
+            pass
         print("error========>",e)
         return jsonify({
             "message":str(e),
             "success":False,
-            "isMatched":None,
-            "matchedUrl":None
+            "isMatched":False,
+            "matchedUrl":[]
         })
 if __name__ == '__main__':
     
