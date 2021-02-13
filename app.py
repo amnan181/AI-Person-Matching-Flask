@@ -192,9 +192,9 @@ def delete():
     try:
         oid = request.form.get('oid')
         resp = Imagegallary.delete_one(
-                        { "_id": oid }
+                        { "_id": ObjectId(oid) }
                     )
-        print(resp)
+        print(resp.acknowledged)
         if resp.acknowledged:
             return jsonify({
                 "message":"Successfully deleted",
