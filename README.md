@@ -2,8 +2,7 @@
 Matching Person
 
 # Instalation Process
-    > pip install cmake
-	> pip install face_recognition
+    > pip install deepface
     
 # Run Now    
     > python app.py
